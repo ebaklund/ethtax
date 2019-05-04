@@ -1,0 +1,27 @@
+{
+  "name": "ethtax",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ebaklund/ethtax.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ebaklund/ethtax/issues"
+  },
+  "homepage": "https://github.com/ebaklund/ethtax#readme",
+  "dependencies": {
+    "coinbase": "^2.0.8",
+    "ethers": "^4.0.27",
+    "superagent": "^5.0.4"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0"
+  }
+}

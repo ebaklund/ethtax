@@ -5,6 +5,7 @@ const superagent = require('superagent');
 const config = require('./config');
 const NestedError = require('./utils/nested-error');
 const etherscan = require('./exchanges/etherscan');
+const norgesbank = require('./exchanges/norgesbank');
 
 let keepaliveExitPromise;
 
@@ -19,12 +20,18 @@ console.log('etherscan_key: ' + config.keys.etherscan);
 console.log('cmc_key: ' + config.keys.cmc);
 
 (async () => {
+
+  const nok_usd = await norgesbank.requestUsdRatesTest();
+  console.log(nok_usd);
+/*
   for (let addr of config.addresses.slice(0, 2)) {
     addr = addr.toLowerCase();
     const recs = await etherscan.getEthRecords(addr);
     console.log(JSON.stringify(recs, null, 2));
   }
+*/
 })();
+
 
 /* ETH
      { blockNumber: '6701742',

@@ -6,23 +6,35 @@ const config = require('./config');
 const NestedError = require('./utils/nested-error');
 const etherscan = require('./exchanges/etherscan');
 const norgesbank = require('./exchanges/norgesbank');
+const coinbase = require('./exchanges/coinbase');
+const idex = require('./exchanges/idex');
 
 let keepaliveExitPromise;
 
 process.on('unhandledRejection', (err /*, promise*/) => {
   console.log('\n\nError: ' + NestedError.asStringified(err));
   keepaliveExitPromise = new Promise((resolve, reject) => setTimeout(() => process.exit(0), 1000));
-  throw error;
+  throw err;
 });
 
 
-console.log('etherscan_key: ' + config.keys.etherscan);
-console.log('cmc_key: ' + config.keys.cmc);
+console.log('etherscan_key: ' + config.etherscan.apiKey);
+console.log('cmc_key: ' + config.coinmarketcap.apiKey);
 
 (async () => {
-
+/*
+  for (let addr of config.addresses.slice(0, 1)) {
+    addr = addr.toLowerCase();
+    idex.requestTransactions(addr);
+  }
+*/
+/*
+  coinbase.requestTransactions();
+*/
+/*
   const nok_usd = await norgesbank.requestUsdRatesTest();
   console.log(nok_usd);
+*/
 /*
   for (let addr of config.addresses.slice(0, 2)) {
     addr = addr.toLowerCase();
@@ -30,6 +42,10 @@ console.log('cmc_key: ' + config.keys.cmc);
     console.log(JSON.stringify(recs, null, 2));
   }
 */
+  for (let addr of config.addresses.slice(0, 1)) {
+    const recs = await etherscan.getEthRecords(addr);
+    console.log(JSON.stringify(recs, null, 2));
+  }
 })();
 
 

@@ -6,12 +6,9 @@
 // Hente data: https://www.norges-bank.no/tema/Statistikk/apne-data/hente-data/
 
 const superagent = require('superagent');
-const ethers = require('ethers');
 
 const config = require('../../config');
 const NestedError = require('../../utils/nested-error');
-
-const etherscanKey = config.keys.etherscan;
 
 async function requestRates(query) {
   const res = await superagent
@@ -38,10 +35,6 @@ async function requestUsdRates(startYear, endYear) {
   return requestRates(query);
 }
 
-async function requestUsdRatesTest() {
-  return requestUsdRates('2018', '2019');
-}
-
 module.exports = {
-  requestUsdRatesTest
+  requestUsdRates
 };

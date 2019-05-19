@@ -17,11 +17,16 @@
   },
   "homepage": "https://github.com/ebaklund/ethtax#readme",
   "dependencies": {
+    "@auroradao/datastream-client": "^1.6.9",
+    "@auroradao/datastream-connector-uws": "^1.6.9",
     "coinbase": "^2.0.8",
     "ethers": "^4.0.27",
     "superagent": "^5.0.4"
   },
   "devDependencies": {
-    "eslint": "^5.16.0"
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "eslint": "^5.16.0",
+    "mocha": "^6.1.4"
   }
 }

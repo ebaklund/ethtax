@@ -25,7 +25,7 @@ describe('idex-exchange', () => {
     })
 
     xit ('receives ETH deposit history', async () => {
-      const history = await idex.getEthDepositHistory(addr);
+      const history = await idex.getEthBalanceHistory(addr);
       expect(history.length).to.be.gt(0);
     })
 

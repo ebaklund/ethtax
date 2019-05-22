@@ -32,23 +32,12 @@ async function getPagedRequest(url, payload) {
 }
 
 async function getTradeHistory(market, addr) {
-  const payload = {
-   market: market,
-    address: addr,
-    sort: "asc",
-    count: 100
-  };
-
+  const payload = { market: market, address: addr, sort: "asc",  count: 100 };
   return getPagedRequest('https://api.idex.market/returnTradeHistory', payload);
 }
 
-function getDepositHistory(addr) {
-    const payload = {
-      address: addr,
-      sort: "asc",
-      count: 100
-    };
-
+function getBalanceHistory(addr) {
+  const payload = { address: addr, sort: "asc", count: 100 };
   return getPagedRequest('https://api.idex.market/returnDepositsWithdrawals', payload);
 }
 
@@ -56,8 +45,8 @@ function getEthTradeHistory(addr) {
   return getTradeHistory("ETH_HBT", addr);
 }
 
-async function getEthDepositHistory(addr) {
-  const history = await getDepositHistory(addr);
+async function getEthBalanceHistory(addr) {
+  const history = await getBalanceHistory(addr);
   const hbtHistory = history.filter(t => t.currency === 'ETH');
   return hbtHistory;
 }
@@ -66,34 +55,50 @@ function getHbtTradeHistory(addr) {
   return getTradeHistory("ETH_HBT", addr);
 }
 
-async function getHbtDepositHistory(addr) {
+async function getHbtBalanceHistory(addr) {
   const history = await getDepositHistory(addr);
   const hbtHistory = history.filter(t => t.currency === 'HBT');
   return hbtHistory;
 }
 
-function getTokenValue(tx) {
+function getTokenValueFromTradeTx(tx) {
   if (/^0x0{40}/.test(tx.tokenSell))
     return '-' + tx.total;
 
   if (/^0x0{40}/.test(tx.tokenBuy))
     return tx.total;
 
-  throw new Error('Failed to get token value');
+  throw new Error('Failed to get token valuefrom trade transaction');
 }
 
-function getUsdValue(tx) {
+function getUsdValueFromTradeTx(tx) {
   if (/^0x0{40}/.test(tx.tokenSell))
     return '-' + tx.usdValue;
 
   if (/^0x0{40}/.test(tx.tokenBuy))
     return tx.usdValue;
 
-  throw new Error('Failed to get usd value');
+  throw new Error('Failed to get usd value from trade transaction');
 }
 
-function getNokFromUsd(usd) {
-  return 0;
+function getTokenValueFromBalanceTx(balance) {
+  if(balance.depositNumber)
+    return balance.amount;
+
+  if(balance.withdrawNumber)
+    return '-' + balance.amount;
+
+  throw new Error('Failed to get token value from balance transaction');
+}
+
+function getUsdValueFromBalanceTx(balance) {
+  if(balance.depositNumber)
+    return balance.amount;
+
+  if(balance.withdrawNumber)
+    return '-' + balance.amount;
+
+  throw new Error('Failed to get usd value from balance transaction');
 }
 
 async function asEthTradeRecs(txs) {
@@ -106,8 +111,28 @@ async function asEthTradeRecs(txs) {
     rec.symbol = 'ETH';
     rec.timeStampSec = tx.timestamp;
     rec.isoDate = date.toISOString();
-    rec.token = { value: getTokenValue(tx), balance: null };
-    rec.usd = { value: getUsdValue(tx), balance: null };
+    rec.token = { value: getTokenValueFromTradeTx(tx), balance: null };
+    rec.usd = { value: getUsdValueFromTradeTx(tx), balance: null };
+    rec.nok = { value: await prices.getNokFromUsd(date, rec.usd.value), balance: null };
+
+    recs.push(rec);
+  }
+
+  return recs;
+}
+
+async function asEthBalanceRecs(txs) {
+  const recs = [];
+
+  for (const tx of txs) {
+    const rec = {};
+    const date = new Date(tx.timestamp * 1000);
+
+    rec.symbol = 'ETH';
+    rec.timeStampSec = tx.timestamp;
+    rec.isoDate = date.toISOString();
+    rec.token = { value: getTokenValueFromBalanceTx(balance), tx: null };
+    rec.usd = { value: getUsdValueFromBalanceTx(tx), tx: null };
     rec.nok = { value: await prices.getNokFromUsd(date, rec.usd.value), balance: null };
 
     recs.push(rec);
@@ -118,17 +143,17 @@ async function asEthTradeRecs(txs) {
 
 async function getEthRecords(addr) {
   const ethTradeTxs = await getEthTradeHistory(addr);
-  const ethDepositsTxs = await getEthDepositHistory(addr);
+  const ethBalanceTxs = await getEthBalanceHistory(addr);
   const ethTradeRecs = await asEthTradeRecs(ethTradeTxs);
-  const ethDepositsRecs = asEthDepositRecs(ethDepositsTxs);
+  const ethBalanceRecs = asEthBalanceRecs(ethBalanceTxs);
 }
 
 module.exports = {
   getTradeHistory,
-  getDepositHistory,
+  getBalanceHistory,
   getEthTradeHistory,
-  getEthDepositHistory,
+  getEthBalanceHistory,
   getHbtTradeHistory,
-  getHbtDepositHistory,
+  getHbtBalanceHistory,
   getEthRecords
 };

@@ -3,7 +3,7 @@
 const chai = require('chai');
 const expect = chai.expect;
 
-const idex = require('./idex-exchange');
+const idex = require('./idex');
 
 describe('idex-exchange', () => {
   const addr = '0xfb7836f8a571e4a167c34ca643a2a6e3224ecb8b';

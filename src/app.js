@@ -5,11 +5,19 @@ const superagent = require('superagent');
 const config = require('./config');
 const NestedError = require('./utils/nested-error');
 const etherscan = require('./exchanges/etherscan');
-const norgesbank = require('./exchanges/norgesbank');
+//const norgesbank = require('./exchanges/norgesbank');
 const coinbase = require('./exchanges/coinbase');
 const idex = require('./exchanges/idex');
+const prices = require('./prices');
 
 let keepaliveExitPromise;
+
+function fmtCurr(curr) {
+
+  const text = ((curr < 0) ? '' : ' ') + curr.toFixed(4);
+  const indent = Math.max(0, 12 - text.length);
+  return ' '.repeat(indent) + text;
+}
 
 process.on('unhandledRejection', (err /*, promise*/) => {
   console.log('\n\nError: ' + NestedError.asStringified(err));
@@ -17,81 +25,56 @@ process.on('unhandledRejection', (err /*, promise*/) => {
   throw err;
 });
 
-
 console.log('etherscan_key: ' + config.etherscan.apiKey);
 console.log('cmc_key: ' + config.coinmarketcap.apiKey);
+console.log(' ');
+
+function logRecords(exchange, symbol, addr, records) {
+  console.log(' ');
+  console.log(`${exchange} ${addr}`);
+  const smb = symbol.toLowerCase();
+  for (const rec of records) {
+    let line = '';
+    line += `${symbol}, ${rec.action}, ${rec.isoDate}, `;
+    line += `${fmtCurr(rec.token.value)} ${smb}, ${fmtCurr(rec.token.balance)} ${smb}, `;
+    line += `${fmtCurr(rec.usd.value)} usd, ${fmtCurr(rec.usd.balance)} usd, `;
+    line += ` ${fmtCurr(rec.nok.value)} nok, ${fmtCurr(rec.nok.balance)} nok`;
+    console.log(line);
+  }
+}
+
+async function getBalanceRecordAt(symbol, date, records) {
+  const rec = records.reverse().find(rec => rec.date.valueOf() <= date.valueOf());
+  const tok = rec ? rec.token.balance : 0;
+  const usd = rec ? await prices.getUsdFrom(rec.symbol, date, tok) : 0;
+  const nok = rec ? await prices.getNokFrom(rec.symbol, date, tok) : 0;
+  return { symbol: symbol, date: date, tok: tok, usd: usd, nok: nok };
+}
+
+function logBalanceRecord(rec) {
+    const smb = rec.symbol.toLowerCase();
+    let line = '';
+    line += `Årslutt ${rec.date.toISOString()}, `;
+    line += `                  ${fmtCurr(rec.tok)} ${smb}, `;
+    line += `                  ${fmtCurr(rec.usd)} usd, `;
+    line += `                   ${fmtCurr(rec.nok)} nok`;
+    console.log(line);
+}
 
 (async () => {
-/*
-  for (let addr of config.addresses.slice(0, 1)) {
-    addr = addr.toLowerCase();
-    idex.requestTransactions(addr);
-  }
-*/
-/*
-  coinbase.requestTransactions();
-*/
-/*
-  const nok_usd = await norgesbank.requestUsdRatesTest();
-  console.log(nok_usd);
-*/
-/*
-  for (let addr of config.addresses.slice(0, 2)) {
-    addr = addr.toLowerCase();
-    const recs = await etherscan.getEthRecords(addr);
-    console.log(JSON.stringify(recs, null, 2));
-  }
-*/
-  for (let addr of config.addresses.slice(0, 1)) {
-    const recs = await etherscan.getEthRecords(addr);
-    console.log(JSON.stringify(recs, null, 2));
+  console.log('Årsoppgaver kryptocvaluta 2018');
+  console.log('------------------------------');
+
+  const yearEnd = new Date(2018, 12-1, 31);
+
+  for (const addr of config.addresses) {
+    let recs;
+    recs = await idex.getRecordsFromSymbol('ETH', addr);
+    logRecords('IDEX', 'ETH', addr, recs);
+    logBalanceRecord(await getBalanceRecordAt('ETH', yearEnd, recs));
+
+    recs = await idex.getRecordsFromSymbol('HBT', addr);
+    logRecords('IDEX', 'HBT', addr, recs);
+    logBalanceRecord(await getBalanceRecordAt('HBT', yearEnd, recs));
   }
 })();
-
-
-/* ETH
-     { blockNumber: '6701742',
-       timeStamp: '1542181686',
-       hash:
-        '0x7d985467c9b30192a9e1e497098ba835ec8d08f377dfe2c955d6f571a7bc2152',
-       nonce: '7',
-       blockHash:
-        '0x4f89934eefbdb7a66c22ec9fd81641d65199c4453fb226169ac68f88170bda37',
-       transactionIndex: '34',
-       from: '0xfb7836f8a571e4a167c34ca643a2a6e3224ecb8b',
-       to: '0x2a0c0dbecc7e4d658f48e01e3fa353f44050c208',
-       value: '5000637375000000000',
-       gas: '250000',
-       gasPrice: '5000000000',
-       isError: '0',
-       txreceipt_status: '1',
-       input: '0xd0e30db0',
-       contractAddress: '',
-       cumulativeGasUsed: '2282143',
-       gasUsed: '34725',
-       confirmations: '952926' } ] }
-
-   HBT
-   { blockNumber: '7253424',
-    timeStamp: '1550845713',
-    hash:
-     '0xce41fa62c88397b476ae82728af681a1a721756a162b9bc5d0b7648509eac5b2',
-    nonce: '298',
-    blockHash:
-     '0xb89a76c06a28ab8aa8d7a5735e3670de23e26846a1af2e59c908c6c793a4900e',
-    from: '0xa4793e13f77bf49dea75423ecc858829d4262a4b',
-    contractAddress: '0xdd6c68bb32462e01705011a4e2ad1a60740f217f',
-    to: '0x7dd16ddbff792289da1961d9eb6acd814345f9fc',
-    value: '3000000000000000000',
-    tokenName: 'Hubiits',
-    tokenSymbol: 'HBT',
-    tokenDecimal: '15',
-    transactionIndex: '157',
-    gas: '100000',
-    gasPrice: '10000000000',
-    gasUsed: '37379',
-    cumulativeGasUsed: '7014067',
-    input:
-     '0xa9059cbb0000000000000000000000007dd16ddbff792289da1961d9eb6acd814345f9fc00000000000000000000000000000000000000000000000029a2241af62c0000',
-    confirmations: '401454' }
-*/

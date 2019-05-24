@@ -7,11 +7,6 @@ const superagent = require('superagent');
 const config = require('../../config');
 const NestedError = require('../../utils/nested-error');
 
-function getKeyFromTimestamp (timestamp) {
-  const date = new Date(timestamp);
-  const key = `${date.getUTCFullYear()}-${date.getUTCMonth()+1}-${date.getUTCDate()}`;
-  return key;
-}
 
 async function requestRates(symbol) {
   const query = `https://min-api.cryptocompare.com/data/histoday?fsym=${symbol}&tsym=USD&limit=1000`;
@@ -30,62 +25,38 @@ async function requestRates(symbol) {
   return Rates;
 }
 
-let _ethRates;
-
-async function requestEthRates () {
-  if (!_ethRates)
-    _ethRates = requestRates('ETH');
-
-  return _ethRates;
+function isValidSymbol(symbol) {
+  const found = [ 'ETH', 'HBT', 'NII', 'AURA' ].find(s => s === symbol);
+  return !!found;
 }
 
-let _hbtRates;
+let _rates = {};
 
-async function requestHbtRates () {
-  if (!_hbtRates)
-    _hbtRates = requestRates('HBT');
+async function getRatesFrom (symbol) {
+  if (!isValidSymbol(symbol))
+    throw new Error (`Failed to validate symbol: ${symbol}`);
 
-  return _hbtRates;
-}
-
-let _niiRates;
-
-async function requestNiiRates () {
-  if (!_niiRates) {
-    const hbtRates = await requestHbtRates();
-    _niiRates = hbtRates.map(item => Object.assign({}, item, { usd: item.usd / 1000 }));
+  if (!_rates[symbol]) {
+    if (symbol === 'NII') {
+      const hbtRates = await getRatesFrom('HBT');
+      _rates[symbol]  = hbtRates.map(item => Object.assign({}, item, { usd: item.usd / 1000 }));
+    }
+    else {
+      _rates[symbol] = await requestRates(symbol);
+    }
   }
 
-  return _niiRates;
+  return _rates[symbol];
 }
 
-async function getUsdFromToken(date, tokenAmount=1, rates) {
+async function getUsdFrom(symbol, date, value=1) {
+  const rates = await getRatesFrom(symbol);
   const key = date.toISOString().split('T')[0];
   const item = rates.find(item => item.key <= key);
 
-  return item.usd * tokenAmount;
-}
-
-async function getUsdFromEth(date, eth=1) {
-  const usd = getUsdFromToken(date, eth, await requestEthRates());
-  return usd;
-}
-
-async function getUsdFromHbt(date, hbt=1) {
-  const usd = getUsdFromToken(date, hbt, await requestHbtRates());
-  return usd;
-}
-
-async function getUsdFromNii(date, nii=1) {
-  const usd = getUsdFromToken(date, nii, await requestNiiRates());
-  return usd;
+  return item.usd * value;
 }
 
 module.exports = {
-  requestEthRates,
-  requestHbtRates,
-  requestNiiRates,
-  getUsdFromEth,
-  getUsdFromHbt,
-  getUsdFromNii
+  getUsdFrom
 };

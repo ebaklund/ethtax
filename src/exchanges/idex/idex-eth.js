@@ -84,7 +84,7 @@ async function getEthRecords(addr) {
   const ethBalanceRecs = await asEthBalanceRecs(ethBalanceTxs);
 
   const ethRecords = ethBalanceRecs.concat(ethTradeRecs);
-  const sortedEthRecords = ethRecords.sort((a,b) => a.date.valueOf() - b.date.valueOf());
+  const sortedEthRecords = ethRecords.sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
   let ethBalance = 0;
 

@@ -1,86 +1,125 @@
 'use strict';
 
 const superagent = require('superagent');
-const ethers = require('ethers');
 
 const config = require('../../config');
 const NestedError = require('../../utils/nested-error');
+const TransactionRecordBuilder = require('../../records').builder;
+const provider = require('./etherscan-provider/etherscan-provider');
+const prices = require('../../prices');
+const currencies = require('../../currencies');
 
-const etherscanKey = config.etherscan.apiKey;
+function getSignedValue (symbol, addr, tx) {
+  const value = currencies.unitStrToNumber(symbol, tx.value);
 
-async function requestAction(query) {
-  const res = await superagent
-  .get(query)
-  .set('Accept', 'application/json');
-  //console.log(res.body.result);
-  return res.body.result;
-}
+  if (tx.to.toLowerCase() === addr.toLowerCase())
+    return value;
 
-async function requestActionTxlist (addr) {
-  const query = `http://api.etherscan.io/api?module=account&action=txlist&address=${addr}&startblock=0&endblock=99999999&sort=asc&apikey=${etherscanKey}`;
-  return requestAction(query);
-}
-
-async function requestActionTokentx (addr) {
-  const query = `http://api.etherscan.io/api?module=account&action=tokentx&address=${addr}&startblock=0&endblock=999999999&sort=asc&apikey=${etherscanKey}`;
-  return requestAction(query);
-}
-
-function signedValueEth (addr, ethtx) {
-  if (ethtx.to.toLowerCase() === addr.toLowerCase())
-    return ethtx.value;
-
-  if (ethtx.from.toLowerCase() === addr.toLowerCase())
-    return '-' + ethtx.value;
+  if (tx.from.toLowerCase() === addr.toLowerCase())
+    return - value;
 
   throw new Error('Failed to calculate signed value');
 }
 
-const prices = {
-  getInUsd: (symbol, timestamp, value) => { return 0; },
-  getInNok: (symbol, timestamp, value) => { return 0; }
+function getAction (symbol, addr, tx) {
+  const value = getSignedValue(symbol, addr, tx);
+  let action = value < 0 ? 's' : 'b';
+
+  if (tx.type && tx.type === 'call')
+    action = 'i';
+
+  return action;
 }
 
-function getInUsd(symbol, timestamp, value, balance) {
-  return {
-    value: prices.getInUsd(symbol, timestamp, value),
-    balance: prices.getInUsd(symbol, timestamp, balance)
-  };
+async function getLatestEthBalance (addr) {
+  const balanceStr = await provider.requestLatestEthBalance(addr);
+  const balance = currencies.unitStrToNumber('ETH', balanceStr);
+  return balance;
 }
 
-function getInNok(symbol, timestamp, value, balance) {
-  return {
-    value: prices.getInNok(symbol, timestamp, value),
-    balance: prices.getInNok(symbol, timestamp, balance)
-  };
+async function getLatestTokBalance (symbol, addr) {
+  const caddr = currencies[symbol].address;
+  const balanceStr = await provider.requestLatestTokBalance(caddr, addr);
+  const balance = currencies.unitStrToNumber(symbol, balanceStr);
+  return balance;
+}
+
+async function getRecsFromTxs(symbol, addr, txs) {
+  const recs = [];
+  let balance = 0;
+
+  for (const tx of txs) {
+    const builder = new TransactionRecordBuilder();
+    const signedValue = getSignedValue(symbol, addr, tx);
+    const action = getAction(symbol, addr, tx);
+    balance += signedValue;
+
+    builder.withExchange('ETHERSCAN');
+    builder.withSymbol(symbol);
+    builder.withAction(action);
+    builder.withDate(new Date(tx.timeStamp * 1000));
+    builder.withTokValue(signedValue);
+    builder.withTokBalance(balance);
+    builder.withUsdValue(await prices.getUsdFrom(symbol, builder.date, builder.tokValue));
+    builder.withUsdBalance(await prices.getUsdFrom(symbol, builder.date, builder.tokBalance));
+    builder.withNokValue(await prices.getNokFrom(symbol, builder.date, builder.tokValue));
+    builder.withNokBalance(await prices.getNokFrom(symbol, builder.date, builder.tokBalance));
+
+    recs.push(builder.build());
+  }
+
+  return recs;
+}
+
+async function getExtRecords (addr) {
+  const txs = await provider.requestEthereumTransactions(addr);
+  const recs = getRecsFromTxs('ETH', addr, txs);
+  return recs;
+}
+
+async function getIntRecords (addr) {
+  const txs = await provider.requestInternalTransactions(addr);
+  const recs = getRecsFromTxs('ETH', addr, txs);
+  return recs;
 }
 
 async function getEthRecords (addr) {
-  try {
-    let acc = ethers.utils.bigNumberify(0);
-    const txs = (await requestActionTxlist(addr)).filter(t => !t.tokenSymbol);
+  const extTxs = await provider.requestEthereumTransactions(addr);
+  const intTxs = await provider.requestInternalTransactions(addr);
+  const ethTxs = extTxs.concat(intTxs);
+  const sortedEthTxs = ethTxs.sort((a, b) => Number(a.timeStamp) - Number(b.timeStamp));
+  const recs = getRecsFromTxs('ETH', addr, sortedEthTxs);
+  return recs;
+}
 
-    return txs.map(t => {
-      const rec = {};
-      rec.symbol = 'ETH';
-      rec.timeStamp = t.timeStamp;
-      rec.isoDate = (new Date(Number(t.timeStamp) * 1000)).toISOString();
-      rec.token = {
-        value: signedValueEth(addr, t),
-        balance: (acc = acc.add(signedValueEth(addr, t)), acc).toString()
-      };
-      rec.usd = getInUsd(rec.symbol, rec.timeStamp, rec.token.value, rec.token.balance);
-      rec.nok = getInNok(rec.symbol, rec.timeStamp, rec.token.value, rec.token.balance);
+async function getTokRecords (symbol, addr) {
+  const txs = await provider.requestTokenTransactions(addr);
+  const filteredTxs = txs.filter(tx => tx.tokenSymbol === symbol);
+  const recs = getRecsFromTxs(symbol, addr, filteredTxs);
+  return recs;
+}
 
-      return rec;
-    });
-  }
-  catch (err) {
-    throw new NestedError(err, 'Failed to get ETH records. ' + err.msg);
-  }
+async function getRecordsFromSymbol(symbol, addr) {
+  if (symbol === 'ETH')
+    return getEthRecords(addr);
+  else
+    return getTokRecords(symbol, addr);
+}
+
+async function getLatestBalanceFromSymbol(symbol, addr) {
+  if (symbol === 'ETH')
+    return getLatestEthBalance(addr);
+  else
+    return getLatestTokBalance(symbol, addr);
 }
 
 module.exports = {
+  getLatestEthBalance,
+  getLatestTokBalance,
+  getExtRecords,
+  getIntRecords,
   getEthRecords,
-  requestActionTokentx
+  getTokRecords,
+  getRecordsFromSymbol,
+  getLatestBalanceFromSymbol,
 };

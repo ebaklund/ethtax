@@ -101,7 +101,7 @@ async function getHbtRecords(addr) {
   const hbtBalanceRecs = await asHbtBalanceRecs(hbtBalanceTxs);
 
   const hbtRecords = hbtBalanceRecs.concat(hbtTradeRecs);
-  const sortedHbtRecords = hbtRecords.sort((a,b) => a.date.valueOf() - b.date.valueOf());
+  const sortedHbtRecords = hbtRecords.sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
   let hbtBalance = 0;
 

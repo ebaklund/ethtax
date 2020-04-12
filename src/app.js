@@ -62,20 +62,21 @@ function logYearendRecord(yearendRec) {
     logBalanceValue('ETH', balanceValue);
     logYearendRecord(yearendRec);
 */
-/*
+
     recs = await etherscan.getRecordsFromSymbol('HBT', addr);
     balanceValue = await etherscan.getLatestBalanceFromSymbol('HBT', addr);
     yearendRec = await recUtils.getBalanceRecordAtDate('HBT', yearEnd, recs);
     logRecords('ETHERSCAN', addr, recs);
     logBalanceValue('HBT', balanceValue);
     logYearendRecord(yearendRec);
-*/
-    const symbol = 'AURA';
+/*
+    const symbol = 'ETH';
     recs = await etherscan.getRecordsFromSymbol(symbol, addr);
     balanceValue = await etherscan.getLatestBalanceFromSymbol(symbol, addr);
     yearendRec = await recUtils.getBalanceRecordAtDate(symbol, yearEnd, recs);
     logRecords('ETHERSCAN', addr, recs);
     logBalanceValue(symbol, balanceValue);
     logYearendRecord(yearendRec);
+*/
   }
 })();

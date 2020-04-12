@@ -21,6 +21,7 @@
     "@auroradao/datastream-connector-uws": "^1.6.9",
     "coinbase": "^2.0.8",
     "ethers": "^4.0.27",
+    "nahmii-sdk": "^2.2.1",
     "superagent": "^5.0.4"
   },
   "devDependencies": {

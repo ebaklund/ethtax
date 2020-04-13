@@ -1,5 +1,6 @@
 'use strict';
 
+const t = require('flow-runtime');
 const superagent = require('superagent');
 
 const config = require('./config');
@@ -37,11 +38,24 @@ function logYearendRecord(yearendRec) {
   console.log(recUtils.fmtBalanceRecord(yearendRec));
 }
 
-(async () => {
-  console.log('Årsoppgaver kryptocvaluta 2018');
-  console.log('------------------------------');
+async function logEtherscanWallet(symbol, addr, yearEnd) {
+  t.string().assert(symbol);
+  t.string().assert(addr);
+  t.class(Date).assert(yearEnd);
 
-  const yearEnd = new Date(2018, 12-1, 31);
+  const recs = await etherscan.getRecordsFromSymbol(symbol, addr);
+  const balanceValue = await etherscan.getLatestBalanceFromSymbol(symbol, addr);
+  const yearendRec = await recUtils.getBalanceRecordAtDate(symbol, yearEnd, recs);
+  logRecords('ETHERSCAN', addr, recs);
+  logBalanceValue(symbol, balanceValue);
+  logYearendRecord(yearendRec);
+}
+
+(async () => {
+  console.log('Årsoppgaver kryptocvaluta');
+  console.log('-------------------------');
+
+  const yearEnd = new Date(2019, 12-1, 31);
 
   for (const addr of config.addresses) {
     let recs, balanceValue, yearendRec;
@@ -54,29 +68,7 @@ function logYearendRecord(yearendRec) {
     logRecords('IDEX', 'HBT', addr, recs);
     logBalanceRecord(await getBalanceRecordAt('HBT', yearEnd, recs));
 */
-/*
-    recs = await etherscan.getRecordsFromSymbol('ETH', addr);
-    balanceValue = await etherscan.getLatestBalanceFromSymbol('ETH', addr);
-    yearendRec = await recUtils.getBalanceRecordAtDate('ETH', yearEnd, recs);
-    logRecords('ETHERSCAN', addr, recs);
-    logBalanceValue('ETH', balanceValue);
-    logYearendRecord(yearendRec);
-*/
-
-    recs = await etherscan.getRecordsFromSymbol('HBT', addr);
-    balanceValue = await etherscan.getLatestBalanceFromSymbol('HBT', addr);
-    yearendRec = await recUtils.getBalanceRecordAtDate('HBT', yearEnd, recs);
-    logRecords('ETHERSCAN', addr, recs);
-    logBalanceValue('HBT', balanceValue);
-    logYearendRecord(yearendRec);
-/*
-    const symbol = 'ETH';
-    recs = await etherscan.getRecordsFromSymbol(symbol, addr);
-    balanceValue = await etherscan.getLatestBalanceFromSymbol(symbol, addr);
-    yearendRec = await recUtils.getBalanceRecordAtDate(symbol, yearEnd, recs);
-    logRecords('ETHERSCAN', addr, recs);
-    logBalanceValue(symbol, balanceValue);
-    logYearendRecord(yearendRec);
-*/
+    // await logEtherscanWallet('ETH', addr, yearEnd)
+    await logEtherscanWallet('HBT', addr, yearEnd)
   }
 })();

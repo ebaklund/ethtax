@@ -13,17 +13,19 @@ function fmtRecord(rec) {
   let line = '';
   line += `${rec.symbol}, ${rec.action}, ${rec.date.toISOString()}, `;
   line += `${fmtCurr(rec.tok.value)} ${smb}, ${fmtCurr(rec.tok.balance)} ${smb}, `;
-  line += `${fmtCurr(rec.usd.value)} usd, ${fmtCurr(rec.usd.balance)} usd, `;
-  line += ` ${fmtCurr(rec.nok.value)} nok, ${fmtCurr(rec.nok.balance)} nok`;
+  line += `${fmtCurr(rec.usd.usdTokRate)} usd/${smb}, ${fmtCurr(rec.usd.value)} usd, ${fmtCurr(rec.usd.balance)} usd, `;
+  line += ` ${fmtCurr(rec.nok.nokUsdRate)} nok/usd, ${fmtCurr(rec.nok.value)} nok, ${fmtCurr(rec.nok.balance)} nok`;
   return line;
 }
 
 async function getBalanceRecordAtDate(symbol, date, recs) {
   const rec = recs.slice().reverse().find(rec => rec.date.valueOf() <= date.valueOf());
   const tok = rec ? rec.tok.balance : 0;
+  const usdTokRate = rec ? await prices.getUsdFrom(rec.symbol, date, 1) : 0;
   const usd = rec ? await prices.getUsdFrom(rec.symbol, date, tok) : 0;
+  const nokUsdRate = rec ? await prices.getNokFrom('USD', date, 1) : 0;
   const nok = rec ? await prices.getNokFrom(rec.symbol, date, tok) : 0;
-  return { symbol: symbol, date: date, tok: tok, usd: usd, nok: nok };
+  return { symbol, date, tok, usdTokRate, usd, nokUsdRate, nok };
 }
 
 function fmtBalanceValue(symbol, balanceValue) {
@@ -39,8 +41,8 @@ function fmtBalanceRecord(rec) {
   let line = '';
   line += `Årslutt ${rec.date.toISOString()}, `;
   line += `                  ${fmtCurr(rec.tok)} ${smb}, `;
-  line += `                  ${fmtCurr(rec.usd)} usd, `;
-  line += `                   ${fmtCurr(rec.nok)} nok`;
+  line += `${fmtCurr(rec.usdTokRate)} usd/${smb},                   ${fmtCurr(rec.usd)} usd,  `;
+  line += `${fmtCurr(rec.nokUsdRate)} nok/usd,                   ${fmtCurr(rec.nok)} nok`;
   return line;
 }
 

@@ -60,8 +60,10 @@ async function getRecsFromTxs(symbol, addr, txs) {
     builder.withDate(new Date(tx.timeStamp * 1000));
     builder.withTokValue(signedValue);
     builder.withTokBalance(balance);
+    builder.withUsdTokRate(await prices.getUsdFrom(symbol, builder.date, 1));
     builder.withUsdValue(await prices.getUsdFrom(symbol, builder.date, builder.tokValue));
     builder.withUsdBalance(await prices.getUsdFrom(symbol, builder.date, builder.tokBalance));
+    builder.withNokUsdRate(await prices.getNokFrom('USD', builder.date, 1));
     builder.withNokValue(await prices.getNokFrom(symbol, builder.date, builder.tokValue));
     builder.withNokBalance(await prices.getNokFrom(symbol, builder.date, builder.tokBalance));
 

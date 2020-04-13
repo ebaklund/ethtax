@@ -44,13 +44,14 @@ async function getNokFromUsd(date, usd=1) {
   if (!_usdRates) {
     const now = new Date();
     const endYear = now.getUTCFullYear();
-    const startYear = now.getUTCFullYear() - 3;
+    const startYear = 2016;
 
-    _usdRates = requestUsdRates(startYear, endYear);
+    _usdRates = await requestUsdRates(startYear, endYear);
   }
 
-  const key = date.toISOString().split('T')[0];
-  const item = (await _usdRates).find(item => item.key <= key);
+  const date2 = new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ));
+  const key = date2.toISOString().split("T")[0];
+  const item = _usdRates.find(item => item.key <= key);
 
   return item.nok * usd;
 }

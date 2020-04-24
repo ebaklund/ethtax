@@ -1,6 +1,7 @@
 'use strict';
 
 const t = require('flow-runtime');
+const sh = require('shelljs');
 const superagent = require('superagent');
 
 const config = require('./config');
@@ -10,6 +11,7 @@ const coinbase = require('./exchanges/coinbase');
 const idex = require('./exchanges/idex');
 const prices = require('./prices');
 const recUtils = require('./records/record-utils');
+const Logger = require('./logger');
 
 let keepaliveExitPromise;
 
@@ -51,11 +53,23 @@ async function logEtherscanWallet(symbol, addr, yearEnd) {
   logYearendRecord(yearendRec);
 }
 
-(async () => {
-  console.log('Årsoppgaver kryptocvaluta');
-  console.log('-------------------------');
+function createReportHeader (logger, YYYY) {
+  let header ='';
+  header += `"${YYYY}\nRepository",`;
+  header += `"konto",`;
+  header += `"Valuta",`;
+  header += `"Antall",`;
+  header += `"USD/TOK\n${YYYY}-12-31\nCMC Close",`;
+  header += `"USD",`;
+  header += `"NOK/USD\n${YYYY}-12-31\nNorgesbank",`;
+  header += `"NOK"`;
 
-  const yearEnd = new Date(2019, 12-1, 31);
+  logger.write(header);
+}
+
+
+async function createReportBody (logger, YYYY) {
+  const yearEnd = new Date(YYYY, 12-1, 31);
 
   for (const addr of config.addresses) {
     if (!(/0x1ce555afbd5b5f837147bcae8762ad7779e0b6d6/i.test(addr)))
@@ -74,4 +88,15 @@ async function logEtherscanWallet(symbol, addr, yearEnd) {
     await logEtherscanWallet('ETH', addr, yearEnd)
     // await logEtherscanWallet('HBT', addr, yearEnd)
   }
-})();
+}
+
+// MAIN
+
+const YYYY = 2019;
+const version = 'v1';
+//const filePath = `/data/home/erik/googledrive/Erik/Skatt/${YYYY}/Kryptovaluta-${version}.csv`;
+const filePath = `./Skatt/${YYYY}/Kryptovaluta-${YYYY}-${version}.csv`;
+const logger = new Logger(filePath);
+
+createReportHeader(logger, YYYY);
+//createReportBody(logger, YYYY);

@@ -1,5 +1,7 @@
 'use strict';
 
+const { formatUnits, bigNumberify } = require('ethers').utils;
+
 const currencies = {
   supportedSymbols: [ 'ETH', 'HBT', 'NII', 'AURA' ],
   ETH: {
@@ -23,11 +25,10 @@ const currencies = {
     address: '0xcdcfc0f66c522fd086a1b725ea3c0eeb9f9e8814'
   },
   unitStrToNumber: (symbol, unitStr) => {
-    const tokDecimals = currencies[symbol].decimals;
-    const valDecimals = 6;
-    //const typeOf = typeof unitStr;
-    const valueStr = unitStr.slice(0, valDecimals - tokDecimals);
-    const number = Number(valueStr) / Math.pow(10, valDecimals);
+    const decimals = currencies[symbol].decimals;
+    const wei = bigNumberify(unitStr);
+    const str = formatUnits(wei, decimals);
+    const number = Number.parseFloat(str);
     return number;
   }
 };

@@ -21,6 +21,13 @@ function getSignedValue (symbol, addr, tx) {
   throw new Error('Failed to calculate signed value');
 }
 
+function getGasFee(tx) {
+  const gasPrice = currencies.unitStrToNumber('ETH', tx.gasPrice || '0');
+  const gasUsed = Number.parseInt(tx.gasUsed || '0');
+  const gasFee = gasPrice * gasUsed;
+  return gasFee;
+}
+
 function getAction (symbol, addr, tx) {
   const value = getSignedValue(symbol, addr, tx);
   let action = value < 0 ? 's' : 'b';
@@ -51,8 +58,9 @@ async function getRecsFromTxs(symbol, addr, txs) {
   for (const tx of txs) {
     const builder = new TransactionRecordBuilder();
     const signedValue = getSignedValue(symbol, addr, tx);
+    const gasFee = ((symbol === 'ETH') && (signedValue <0 )) ? getGasFee(tx) : 0;
     const action = getAction(symbol, addr, tx);
-    balance += signedValue;
+    balance += (signedValue - gasFee);
 
     builder.withExchange('ETHERSCAN');
     builder.withSymbol(symbol);

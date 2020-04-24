@@ -51,7 +51,8 @@ async function getRatesFrom (symbol) {
 
 async function getUsdFrom(symbol, date, value=1) {
   const rates = await getRatesFrom(symbol);
-  const key = date.toISOString().split('T')[0];
+  const date2 = new Date(date.getTime() - (date.getTimezoneOffset() * 60000 ));
+  const key = date2.toISOString().split("T")[0];
   const item = rates.find(item => item.key <= key);
 
   return item.usd * value;

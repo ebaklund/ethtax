@@ -58,6 +58,9 @@ async function logEtherscanWallet(symbol, addr, yearEnd) {
   const yearEnd = new Date(2019, 12-1, 31);
 
   for (const addr of config.addresses) {
+    if (!(/0x1ce555afbd5b5f837147bcae8762ad7779e0b6d6/i.test(addr)))
+      continue;
+
     let recs, balanceValue, yearendRec;
 /*
     recs = await idex.getRecordsFromSymbol('ETH', addr);
@@ -68,7 +71,7 @@ async function logEtherscanWallet(symbol, addr, yearEnd) {
     logRecords('IDEX', 'HBT', addr, recs);
     logBalanceRecord(await getBalanceRecordAt('HBT', yearEnd, recs));
 */
-    // await logEtherscanWallet('ETH', addr, yearEnd)
-    await logEtherscanWallet('HBT', addr, yearEnd)
+    await logEtherscanWallet('ETH', addr, yearEnd)
+    // await logEtherscanWallet('HBT', addr, yearEnd)
   }
 })();

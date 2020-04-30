@@ -4,7 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc -a mocha './{,!(node_modules)/**}/*.spec.js' --exit --",
+    "test0": "mocha './{,!(node_modules)/**}/*.spec.js' --exit --"
   },
   "repository": {
     "type": "git",
@@ -17,19 +18,20 @@
   },
   "homepage": "https://github.com/ebaklund/ethtax#readme",
   "dependencies": {
-    "@auroradao/datastream-client": "^1.6.9",
-    "@auroradao/datastream-connector-uws": "^1.6.9",
+    "@hubiinetwork/async-chain": "github:hubiinetwork/async-chain",
     "coinbase": "^2.0.8",
-    "ethers": "^4.0.46",
+    "crypto": "^1.0.1",
+    "ethers": "^4.0.47",
     "flow-runtime": "^0.17.0",
-    "nahmii-sdk": "^2.2.1",
-    "shelljs": "^0.8.3",
-    "superagent": "^5.0.4"
+    "nahmii-sdk": "^2.5.1",
+    "shelljs": "^0.8.4",
+    "superagent": "^5.2.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "eslint": "^5.16.0",
-    "mocha": "^6.1.4"
+    "mocha": "^6.2.3",
+    "nyc": "^15.0.1"
   }
 }

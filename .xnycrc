@@ -1,0 +1,15 @@
+{
+  "include": [
+    "src/**/*.js"
+  ],
+  "exclude": [
+    "**/*.spec.js",
+    "**/index.js"
+  ],
+  "check-coverage": true,
+  "per-file": false,
+  "statements": 100,
+  "branches": 100,
+  "functions": 100,
+  "lines": 100
+}

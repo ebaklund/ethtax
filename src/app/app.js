@@ -6,10 +6,10 @@ const superagent = require('superagent');
 
 const config = require('./config');
 const NestedError = require('../utils/nested-error');
-const etherscan = require('../managers/accessors/accounts/etherscan');
+const etherscan = require('../workflows/accessors/accounts/etherscan');
 //const coinbase = new (require('./accessors/accounts/coinbase-accessor'))(config.coinbase.apiKey, config.coinbase.apiSecret);
-const idex = require('../managers/accessors/accounts/idex');
-const prices = require('../managers/accessors/prices');
+const idex = require('../workflows/accessors/accounts/idex');
+const prices = require('../workflows/accessors/prices');
 const recUtils = require('../records/record-utils');
 const Logger = require('../utils/logger');
 
@@ -114,7 +114,7 @@ async function main () {
   // createReportHeader(logger, YYYY);
   // createReportBody(logger, YYYY);
 
-  const { showTransactions } = require('../managers/transaction-table-presenter');
+  const { showTransactions } = require('../workflows/transaction-table-presenter');
   await showTransactions(new Date(YYYY, 12, 31, 23, 55));
 }
 

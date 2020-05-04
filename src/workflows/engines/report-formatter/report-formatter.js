@@ -5,7 +5,7 @@ require('../primitives/output-transaction-record');
 require('../primitives/output-account-balance');
 require('../primitives/output-year-balance');
 require('../primitives/output-transaction-table');
-require('../../../runtime-types/valid-float');
+require('../../../runtime-types/definite-number');
 const t = require('flow-runtime');
 
 // private
@@ -29,7 +29,7 @@ function fmtField (str, fieldWidth) {
 }
 
 function fmtAmount(amount, unit, fieldWidth) {
-  t.ValidFloat().assert(amount);
+  t.DefiniteNumber().assert(amount);
   t.string().assert(unit);
   t.number().assert(fieldWidth);
 

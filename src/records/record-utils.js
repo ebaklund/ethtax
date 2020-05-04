@@ -1,6 +1,6 @@
 'use strict';
 
-const prices = require('../managers/accessors/prices');
+const prices = require('../workflows/accessors/prices');
 
 function fmtCurr(curr) {
   const text = ((curr < 0) ? '' : ' ') + curr.toFixed(4);

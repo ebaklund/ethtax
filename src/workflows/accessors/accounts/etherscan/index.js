@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./etherscan');
+module.exports = require('./etherscan-accessor');

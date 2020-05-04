@@ -1,4 +1,4 @@
-'use strinct';
+'use strict';
 
 require('../primitives/accessor-account-info');
 require('../primitives/accessor-transaction-info');

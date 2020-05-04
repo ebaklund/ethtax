@@ -2,8 +2,8 @@
 
 const t = require('flow-runtime');
 
-const ValidDate = t.refinement(t.class(Date), input => {
-  if (isNaN(input))
+const ValidDate = t.refinement(t.any(), input => {
+  if (!t.class(Date) || isNaN(input))
     return 'must be valid date';
 });
 

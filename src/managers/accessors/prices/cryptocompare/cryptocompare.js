@@ -20,9 +20,6 @@ async function requestRates(symbol) {
     .get(query)
     .set('Content-Type', 'application/json');
 
-  if (!t.array().accepts(res.body.Data))
-    throw Error(`Failed to retreive ${symbol} price rate from cryptocompare`);
-
   const Rates = res.body.Data
     .sort((a,b) => b.time - a.time)
     .map(item => ({
@@ -33,22 +30,16 @@ async function requestRates(symbol) {
   return Rates;
 }
 
-function rectifyValidSymbol(symbol) {
-  if (symbol === 'AURA')
-    symbol = 'IDEX'; // https://idex.market/aura-token-swap
-
-  const found = [ 'ETH', 'HBT', 'NII', 'IDEX', 'EUR' ].find(s => s === symbol);
-
-  if (!found)
-    throw new Error (`Failed to validate symbol: ${symbol}`);
-
-  return symbol;
+function isValidSymbol(symbol) {
+  const found = [ 'ETH', 'HBT', 'NII', 'AURA', 'EUR' ].find(s => s === symbol);
+  return !!found;
 }
 
 let _rates = {};
 
 async function getRatesFrom (symbol) {
-  symbol = rectifyValidSymbol(symbol);
+  if (!isValidSymbol(symbol))
+    throw new Error (`Failed to validate symbol: ${symbol}`);
 
   if (!_rates[symbol]) {
     if (symbol === 'NII') {

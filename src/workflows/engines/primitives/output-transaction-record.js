@@ -1,21 +1,21 @@
 'use strict';
 
-require('../../../runtime-types/valid-float');
-require('../../../runtime-types/valid-pos-float');
+require('../../../runtime-types/definite-number');
+require('../../../runtime-types/definite-pos-number');
 const t = require('flow-runtime');
 
 const OutputTransactionRecord = t.object({
     date: t.class(Date),
     tokSymbol: t.string(),
-    tokAmount: t.ValidFloat(),
-    fee: t.ValidPosFloat(),
-    tokBalance: t.ValidPosFloat(),
-    usdTokRate: t.ValidFloat(),
-    usdAmount: t.ValidFloat(),
-    usdBalance: t.ValidPosFloat(),
-    nokUsdRate: t.ValidFloat(),
-    nokAmount: t.ValidFloat(),
-    nokBalance: t.ValidPosFloat(),
+    tokAmount: t.DefiniteNumber(),
+    fee: t.DefinitePosNumber(),
+    tokBalance: t.DefinitePosNumber(),
+    usdTokRate: t.DefiniteNumber(),
+    usdAmount: t.DefiniteNumber(),
+    usdBalance: t.DefinitePosNumber(),
+    nokUsdRate: t.DefiniteNumber(),
+    nokAmount: t.DefiniteNumber(),
+    nokBalance: t.DefinitePosNumber(),
     misc: t.any()
 });
 

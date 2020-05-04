@@ -11,6 +11,7 @@ const prices = require('../../accessors/prices');
 const currencies = require('../../accessors/currencies');
 
 const assert = require('assert');
+const ethers = require('ethers');
 
 // Private
 
@@ -32,21 +33,21 @@ async function getTransactionRecords (accountInfo) {
 
   const records = [];
   let runningTokBalance = 0;
-  let runningDate = 0;
+  let runningDate = new Date(0);
   let runningAmount = null;
 
   const isAscendingTime = (tx) => {
-    if (tx.date.valueOf() < runningDate)
+    if (tx.date.valueOf() < runningDate.valueOf())
       return false;
 
-    if (tx.date.valueOf() === runningDate) {
+    if (tx.date.valueOf() === runningDate.valueOf()) {
       const isTransitionPair = tx.amount === -runningAmount;
 
       if (! transitionPair)
         return false;
     }
 
-    runningDate = tx.date.valueOf();
+    runningDate = tx.date;
     runningAmount = tx.amount;
 
     return true;
@@ -66,8 +67,10 @@ async function getTransactionRecords (accountInfo) {
     if ((runningTokBalance < 0) && (runningTokBalance > -0.000000000001))
       runningTokBalance = 0;
 
-    t.ValidFloat().assert(tokAmount);
-    t.ValidPosFloat().assert(runningTokBalance);
+    t.DefiniteNumber().assert(tokAmount);
+
+    if (!t.DefinitePosNumber().accepts(runningTokBalance))
+      throw Error('Balance is running negative!');
 
     const transactionRec = {
       date: date,
@@ -88,7 +91,8 @@ async function getTransactionRecords (accountInfo) {
     records.push(transactionRec);
   }
 
-  assert(runningTokBalance === accountInfo.tokBalance);
+  if (runningTokBalance.toFixed(12) !== accountInfo.tokBalance.toFixed(12))
+    throw new Error(`Failed to ensure that ${accountInfo.tokSymbol} transaction balance equals account balance.`);
 
   return records;
 }
@@ -114,14 +118,16 @@ async function getAccountBalance (accountInfo) {
   return balanceRec;
 }
 
-async function getTransactionsYearBalance (transactions, date) {
+async function getTransactionsYearBalance (symbol, transactions, date) {
+  t.string().assert(symbol);
   t.array(t.OutputTransactionRecord()).assert(transactions);
+  t.class(Date).assert(date);
 
   const tx = transactions.slice().reverse().find(tx => tx.date.valueOf() <= date.valueOf());
 
   const balanceRec = {
     date: date,
-    tokSymbol: tx ? tx.tokSymbol : 0,
+    tokSymbol: symbol,
     tokBalance: tx ? tx.tokBalance : 0,
     usdTokRate: tx ? await prices.getUsdFrom(tx.tokSymbol, date, 1) : 0,
     usdBalance: tx ? await prices.getUsdFrom(tx.tokSymbol, date, tx.tokBalance) : 0,
@@ -146,7 +152,7 @@ async function getTransactionsTable (accountInfo, date) {
     header: getTransactionsHeader(accountInfo),
     records: txRecords,
     accountBalance: await getAccountBalance(accountInfo),
-    yearBalance: await getTransactionsYearBalance(txRecords, date)
+    yearBalance: await getTransactionsYearBalance(accountInfo.tokSymbol, txRecords, date)
   }
 
   t.OutputTransactionTable().assert(table);

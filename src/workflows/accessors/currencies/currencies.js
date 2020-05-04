@@ -1,5 +1,7 @@
 'use strict';
 
+const t = require('flow-runtime');
+
 const { formatUnits, bigNumberify } = require('ethers').utils;
 
 const currencies = {
@@ -24,7 +26,22 @@ const currencies = {
     decimals: 18,
     address: '0xcdcfc0f66c522fd086a1b725ea3c0eeb9f9e8814'
   },
+  IDEX: {
+    name: 'IDEX Token',
+    decimals: 18,
+    address: '0xB705268213D593B8FD88d3FDEFF93AFF5CbDcfAE'
+  },
   unitStrToNumber: (symbol, unitStr) => {
+    t.string().assert(symbol);
+
+    if (!t.string().accepts(unitStr))
+      console.log('deleteme');
+
+    t.string().assert(unitStr);
+
+    if (!currencies[symbol])
+      throw Error(`Unsupported symbol: ${symbol}`);
+
     const decimals = currencies[symbol].decimals;
     const wei = bigNumberify(unitStr);
     const str = formatUnits(wei, decimals);

@@ -43,9 +43,11 @@ function getFormattedTransactionsHeader (outputHeader) {
   t.OutputTransactionsHeader(outputHeader);
 
   const head = outputHeader;
+  const address = head.address || '(no address)';
+  const caption = `${head.exchange} ${head.symbol} ${address}`;
 
   let line = '';
-  line += `${fmtField(head.exchange + ' ' + (head.address || '(no address)'), 0)}\n`;
+  line += `${fmtField(caption, 0)}\n`;
   line += `${fmtField('Symbol', fmtWidth.symbol)},`;
   line += `${fmtField('Date', fmtWidth.date)},`;
   line += `${fmtField('Amount', fmtWidth.amount)},`;
@@ -57,8 +59,6 @@ function getFormattedTransactionsHeader (outputHeader) {
   line += `${fmtField('Rate', fmtWidth.rate)},`;
   line += `${fmtField('Amount', fmtWidth.amount)},`;
   line += `${fmtField('Balance', fmtWidth.amount)}`;
-
-  return line;
 
   return line;
 }

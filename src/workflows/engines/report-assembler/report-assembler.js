@@ -20,6 +20,7 @@ function getTransactionsHeader (accountInfo) {
 
   const header = {
     exchange: accountInfo.exchange,
+    symbol: accountInfo.tokSymbol,
     address: accountInfo.address
   }
 

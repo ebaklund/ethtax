@@ -6,6 +6,7 @@ const t = require('flow-runtime');
 
 const OutputTransactionsHeader = t.object({
   exchange: t.string(),
+  symbol: t.string(),
   address: t.string()
 });
 

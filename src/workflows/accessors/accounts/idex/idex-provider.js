@@ -1,31 +1,43 @@
 'use strict';
 
-const assert = require('assert');
-
 // Documentation: https://docs.idex.market/#operation/returnTradeHistory
 
+require('../../../../runtime-types/address-string');
+const t = require('flow-runtime');
+const assert = require('assert');
 const superagent = require('superagent');
 
 const NestedError = require('../../../../utils/nested-error');
 
-
-async function getPagedRequest(url, payload) {
-  let result = [];
+async function getPagedRequest(query, payload) {
+  const rootUri = 'https://api.idex.market';
+  const fullQuery = `${rootUri}/${query}`;
+  const pages = [];
   let idex_next_cursor = null;
+
 
   while (idex_next_cursor !== undefined) {
     if (idex_next_cursor)
       payload['cursor'] = idex_next_cursor;
 
+    const payloadStr = JSON.stringify(payload);
+    console.log(`*** QUERY: ${fullQuery} ${payloadStr}`);
+
     try {
       const res = await superagent
-      .post(url)
+      .post(fullQuery)
       .set('Content-Type', 'application/json')
-      .send(JSON.stringify(payload));
+      .send(payloadStr);
 
-      const values = Object.values(res.body);
-      for (const arr of Object.values(res.body))
-        result = result.concat(arr);
+      if (res.status !== 200)
+        throw Error(`HTTP failure ${res.status}`);
+
+      const hasData =
+        (res.body instanceof Array && res.body.length > 0) ||
+        (Object.entries(res.body).length > 0);
+
+      if (hasData)
+        pages.push(res.body);
 
       idex_next_cursor = res.headers['idex-next-cursor'];
     }
@@ -34,34 +46,47 @@ async function getPagedRequest(url, payload) {
     }
   }
 
-  return result;
+  return pages;
 }
 
-const _tradeHistory = {};
+async function getBalances(wallet) {
+  const payload = { address: wallet, sort: "asc", count: 100 };
+  const pages = await getPagedRequest('returnBalances', payload);
 
-async function getTradeHistory(market, addr) {
-  const key = market + '/' + addr;
+  const balances = pages.reduce((obj, page) => (Object.assign(obj, page), obj), {});
 
-  if (!_tradeHistory[key]) {
-    const payload = { market: market, address: addr, sort: "asc",  count: 100 };
-    _tradeHistory[key] = await getPagedRequest('https://api.idex.market/returnTradeHistory', payload);
-  }
-
-  return _tradeHistory[key];
+  return balances;
 }
 
-const _balanceHistory = {};
+async function getDepositsWithdrawals(wallet) {
+  t.AddressString().assert(wallet);
 
-async function getBalanceHistory(addr) {
-  if (!_balanceHistory[addr]) {
-    const payload = { address: addr, sort: "asc", count: 100 };
-    _balanceHistory[addr] = getPagedRequest('https://api.idex.market/returnDepositsWithdrawals', payload);
-  }
+  const payload = { address: wallet, sort: "asc", count: 100 };
+  const pages = await getPagedRequest('returnDepositsWithdrawals', payload);
 
-  return _balanceHistory[addr];
+  const depositsWithdrawals = pages.reduce((obj, page) => {
+    obj.deposits.push(...page.deposits);
+    obj.withdrawals.push(...page.withdrawals);
+    return obj;
+  }, {deposits:[], withdrawals: []});
+
+  return depositsWithdrawals;
+}
+
+
+async function getTradeHistory(wallet) {
+  t.AddressString().assert(wallet);
+
+  const payload = { address: wallet, sort: "asc",  count: 100 };
+  const pages = await getPagedRequest('returnTradeHistory', payload);
+
+  const transactions = pages.reduce((arr, page) => arr.concat(page), []);
+
+  return transactions;
 }
 
 module.exports = {
-  getTradeHistory,
-  getBalanceHistory
+  getBalances,
+  getDepositsWithdrawals,
+  getTradeHistory
 };

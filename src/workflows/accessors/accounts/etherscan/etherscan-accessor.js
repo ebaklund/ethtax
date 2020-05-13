@@ -2,8 +2,6 @@
 
 require('../primitives/accessor-account-info');
 require('../primitives/accessor-transaction-info');
-
-require('../../../../runtime-types/ethereum-address');
 const t = require('flow-runtime');
 
 const NestedError = require('../../../../utils/nested-error');
@@ -54,7 +52,7 @@ async function request(query) {
 }
 
 async function getEthBalance (wallet) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
 
   const query = `?module=account&action=balance&address=${wallet}&tag=latest`;
   const balance = await request.call(this, query);
@@ -63,8 +61,8 @@ async function getEthBalance (wallet) {
 }
 
 async function getTokBalance (wallet, contract) {
-  t.EthereumAddress().assert(wallet);
-  t.EthereumAddress().assert(contract);
+  t.AddressString().assert(wallet);
+  t.AddressString().assert(contract);
 
   const query = `?module=account&action=tokenbalance&contractaddress=${contract}&address=${wallet}&tag=latest`;
   const balance = await request.call(this, query);
@@ -73,7 +71,7 @@ async function getTokBalance (wallet, contract) {
 }
 
 async function getEthTransactions (wallet) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
 
   const query = `?module=account&action=txlist&address=${wallet}&startblock=0&endblock=99999999&sort=asc`;
   const externalTransactions = await request.call(this, query);
@@ -87,7 +85,7 @@ async function getEthTransactions (wallet) {
 }
 
 async function getTokTransactions (wallet) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
 
   const extQuery = `?module=account&action=tokentx&address=${wallet}&startblock=0&endblock=999999999&sort=asc`;
   const transactions = await request.call(this, extQuery);
@@ -127,7 +125,7 @@ function getGasFee(signedValue, tx) {
 }
 
 async function extractEthTransactionInfo(wallet, tx) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
   t.object().assert(tx);
 
   const signedValue = getSignedValue ('ETH', wallet, tx);
@@ -146,14 +144,14 @@ async function extractEthTransactionInfo(wallet, tx) {
 }
 
 async function extractEthAccountInfo(wallet, txs, balance) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
   t.array().assert(txs);
   t.string().assert(balance);
 
   const info = {
     exchange: 'Etherscan',
     type: 'wallet',
-    address: wallet,
+    wallet: wallet,
     tokSymbol: 'ETH',
     tokBalance: currencies.unitStrToNumber('ETH', balance),
     transactions: await Promise.all(txs.map(tx => extractEthTransactionInfo(wallet, tx)))
@@ -168,7 +166,7 @@ async function extractEthAccountInfo(wallet, txs, balance) {
 
 async function extractTokTransactionInfo(symbol, wallet, tx) {
   t.string().assert(symbol);
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
   t.object().assert(tx);
 
   const info = {
@@ -186,7 +184,7 @@ async function extractTokTransactionInfo(symbol, wallet, tx) {
 
 async function extractTokAccountInfo(symbol, wallet, txs, balanceStr) {
   t.string().assert(symbol);
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
   t.array().assert(txs);
   t.string().assert(balanceStr);
 
@@ -195,7 +193,7 @@ async function extractTokAccountInfo(symbol, wallet, txs, balanceStr) {
   const info = {
     exchange: 'Etherscan',
     type: 'wallet',
-    address: wallet,
+    wallet: wallet,
     tokSymbol: symbol,
     tokBalance: currencies.unitStrToNumber(symbol, balanceStr),
     transactions: transactions
@@ -227,10 +225,8 @@ async function getTokTransactionsMap (wallet) {
 }
 
 async function getTokBalanceMap (wallet, contracts) {
-  t.EthereumAddress().assert(wallet);
-
-  if (!t.array(t.EthereumAddress()).accepts(contracts))
-    throw new TypeError('Expected [...EthereumAddress].');
+  t.AddressString().assert(wallet);
+  t.array(t.AddressString()).assert(contracts);
 
   const tokBalanceMap = await AsyncChain.from(contracts)
     .reduce(async (map, contract) => {
@@ -243,7 +239,7 @@ async function getTokBalanceMap (wallet, contracts) {
 }
 
 async function getTokAccountInfos (wallet, tokTxsMap, tokBalanceMap) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
   t.class(Map).assert(tokTxsMap);
   t.class(Map).assert(tokBalanceMap);
 
@@ -257,7 +253,7 @@ async function getTokAccountInfos (wallet, tokTxsMap, tokBalanceMap) {
 }
 
 async function getAccountInfosFromAddress (wallet) {
-  t.EthereumAddress().assert(wallet);
+  t.AddressString().assert(wallet);
 
   const ethTxs = (await getEthTransactions.call(this, wallet));
   const ethBalance = await getEthBalance.call(this, wallet);
@@ -275,7 +271,7 @@ async function getAccountInfosFromAddress (wallet) {
 class EtherscanAccessor {
   constructor (apiKey, addresses) {
     t.string().assert(apiKey);
-    t.array(t.EthereumAddress()).assert(addresses);
+    t.array(t.AddressString()).assert(addresses);
 
     _rootUri.set(this, 'https://api.etherscan.io/api');
     _apiKey.set(this, apiKey);

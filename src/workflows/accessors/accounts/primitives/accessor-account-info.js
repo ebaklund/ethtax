@@ -1,14 +1,14 @@
 'use strict';
 
 require('../../../../runtime-types/definite-pos-number');
-require('../../../../runtime-types/ethereum-address');
+require('../../../../runtime-types/wallet-string');
 require('./accessor-transaction-info');
 const t = require('flow-runtime');
 
 const _AccessorAccountInfo = t.object({
   exchange: t.string(),
   type: t.string(),
-  address: t.string(),
+  wallet: t.WalletString(),
   tokSymbol: t.string(),
   tokBalance: t.DefinitePosNumber(),
   transactions: t.array(t.AccessorTransactionInfo())

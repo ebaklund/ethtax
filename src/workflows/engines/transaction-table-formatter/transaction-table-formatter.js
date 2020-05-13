@@ -43,8 +43,8 @@ function getFormattedTransactionsHeader (outputHeader) {
   t.OutputTransactionsHeader(outputHeader);
 
   const head = outputHeader;
-  const address = head.address || '(no address)';
-  const caption = `${head.exchange} ${head.symbol} ${address}`;
+  const wallet = head.wallet || '(no wallet address)';
+  const caption = `${head.exchange} ${head.symbol} ${wallet}`;
 
   let line = '';
   line += `${fmtField(caption, 0)}\n`;

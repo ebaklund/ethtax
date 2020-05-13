@@ -1,3 +1,3 @@
 'use strict';
 
-module.exports = require('./idex');
+module.exports = require('./idex-accessor');

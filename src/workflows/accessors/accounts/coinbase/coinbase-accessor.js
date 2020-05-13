@@ -155,10 +155,10 @@ class CoinbaseAccessor {
         return info.transactions.length > 0;
       })
       .map(async ([account, info]) => {
-        info.address = await getAddress.call(this, info.id);
+        info.wallet = await getAddress.call(this, info.id);
 
-        if (info.address === null)
-          info.address = 'Type ' + account.type;
+        if (info.wallet === null)
+          info.wallet = 'Type ' + account.type;
 
         return [account, info];
       })

@@ -21,7 +21,7 @@ function getTransactionsHeader (accountInfo) {
   const header = {
     exchange: accountInfo.exchange,
     symbol: accountInfo.tokSymbol,
-    address: accountInfo.address
+    wallet: accountInfo.wallet
   }
 
   t.OutputTransactionsHeader().assert(header);
@@ -40,16 +40,17 @@ async function getTransactionRecords (accountInfo) {
   const isAscendingTime = (tx) => {
     if (tx.date.valueOf() < runningDate.valueOf())
       return false;
-
+/*
     if (tx.date.valueOf() === runningDate.valueOf()) {
       const isTransitionPair = tx.amount === -runningAmount;
 
-      if (! transitionPair)
+      if (! isTransitionPair)
         return false;
     }
 
-    runningDate = tx.date;
     runningAmount = tx.amount;
+*/
+    runningDate = tx.date;
 
     return true;
   };
@@ -71,7 +72,7 @@ async function getTransactionRecords (accountInfo) {
     t.DefiniteNumber().assert(tokAmount);
 
     if (!t.DefinitePosNumber().accepts(runningTokBalance))
-      throw Error('Balance is running negative!');
+      throw Error(`Balance is running negative! wallet: ${accountInfo.wallet}`);
 
     const transactionRec = {
       date: date,

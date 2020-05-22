@@ -5,7 +5,7 @@ const t = require('flow-runtime');
 
 const OutputTransactionsHeader = t.object({
   exchange: t.string(),
-  symbol: t.string(),
+  tokSymbol: t.string(),
   wallet: t.WalletString()
 });
 

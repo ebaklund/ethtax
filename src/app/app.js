@@ -20,8 +20,12 @@ async function main () {
   //const filePath = `/data/home/erik/googledrive/Erik/Skatt/${YYYY}/Kryptovaluta-${version}.csv`;
   const filePath = `./Skatt/${YYYY}/Kryptovaluta-${YYYY}-${version}.csv`;
 
-  const { showTransactions } = require('../workflows/transaction-table-presenter');
-  await showTransactions(new Date(YYYY, 12, 31, 23, 55));
+  const presenter = require('../workflows/transaction-table-presenter');
+  const december = 11; // zero base
+  const date = new Date(YYYY, december, 31, 23, 55);
+
+  await presenter.showTransactions(date);
+  await presenter.showTaxReport(date);
 }
 
 module.exports = {

@@ -20,7 +20,7 @@ function getTransactionsHeader (accountInfo) {
 
   const header = {
     exchange: accountInfo.exchange,
-    symbol: accountInfo.tokSymbol,
+    tokSymbol: accountInfo.tokSymbol,
     wallet: accountInfo.wallet
   }
 
@@ -120,21 +120,21 @@ async function getAccountBalance (accountInfo) {
   return balanceRec;
 }
 
-async function getTransactionsYearBalance (symbol, transactions, date) {
-  t.string().assert(symbol);
+async function getTransactionsYearBalance (tokSymbol, transactions, yearEndDate) {
+  t.string().assert(tokSymbol);
   t.array(t.OutputTransactionRecord()).assert(transactions);
-  t.class(Date).assert(date);
+  t.class(Date).assert(yearEndDate);
 
-  const tx = transactions.slice().reverse().find(tx => tx.date.valueOf() <= date.valueOf());
+  const tx = transactions.slice().reverse().find(tx => tx.date.valueOf() <= yearEndDate.valueOf());
 
   const balanceRec = {
-    date: date,
-    tokSymbol: symbol,
+    date: yearEndDate,
+    tokSymbol: tokSymbol,
     tokBalance: tx ? tx.tokBalance : 0,
-    usdTokRate: tx ? await prices.getUsdFrom(tx.tokSymbol, date, 1) : 0,
-    usdBalance: tx ? await prices.getUsdFrom(tx.tokSymbol, date, tx.tokBalance) : 0,
-    nokUsdRate: tx ? await prices.getNokFrom('USD', tx.date, 1) : 0,
-    nokBalance: tx ? await prices.getNokFrom(tx.tokSymbol, date, tx.tokBalance) : 0
+    usdTokRate: await prices.getUsdFrom(tokSymbol, yearEndDate, 1),
+    usdBalance: tx ? await prices.getUsdFrom(tokSymbol, yearEndDate, tx.tokBalance) : 0,
+    nokUsdRate: await prices.getNokFrom('USD', yearEndDate, 1),
+    nokBalance: tx ? await prices.getNokFrom(tokSymbol, yearEndDate, tx.tokBalance) : 0
   };
 
   t.OutputYearBalance().assert(balanceRec);

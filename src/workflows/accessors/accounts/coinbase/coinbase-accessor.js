@@ -50,13 +50,28 @@ async function request (query) {
   }
 }
 
+async function retry (request) {
+  t.function().assert(request);
+
+  for (let i = 0; i < 5; ++i) {
+    try {
+      return await request();
+    }
+    catch (err) {
+      console.log(err.message);
+    }
+  }
+
+  return await request();
+}
+
 async function getTransactions (accountId) {
-  const txs = (await request.call(this, `accounts/${accountId}/transactions`));
+  const txs = await retry(() => request.call(this, `accounts/${accountId}/transactions`));
   return txs;
 }
 
 async function getAddress (accountId) {
-  const addresses = (await request.call(this, `accounts/${accountId}/addresses`));
+  const addresses = await retry(() => request.call(this, `accounts/${accountId}/addresses`));
 
   if (addresses.length > 1)
     throw new Error(`Expected address count to be at most 1. Is ${addresses.length}`);
@@ -143,7 +158,9 @@ class CoinbaseAccessor {
   }
 
   async getAccountInfos () {
-    return AsyncChain.from(await request.call(this, 'accounts'))
+    const accounts = await retry(() => request.call(this, `accounts`));
+
+    return AsyncChain.from(accounts)
       .map(account => {
         return [ account, extractInfoFromAccount (account) ];
       })

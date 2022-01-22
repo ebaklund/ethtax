@@ -15,7 +15,17 @@ process.on('unhandledRejection', (err /*, promise*/) => {
 // MAIN
 
 async function main () {
-  const YYYY = 2019;
+  const YYYY = process.argv[2];
+  console.info('Taxation year: ', YYYY)
+
+  if (! /20[0-9][0-9]/.test(YYYY)) {
+    console.error(`Illegal input argument: \"${YYYY}\". Expected year of taxation in format: \"YYYY\".`)
+    console.error(`Usage:`)
+    console.error(` $ cd ${process.argv[1]}`)
+    console.error(` $ node . <YYYY>`)
+    return;
+  }
+
   const version = 'v1';
   //const filePath = `/data/home/erik/googledrive/Erik/Skatt/${YYYY}/Kryptovaluta-${version}.csv`;
   const filePath = `./Skatt/${YYYY}/Kryptovaluta-${YYYY}-${version}.csv`;

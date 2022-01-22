@@ -140,7 +140,7 @@ async function getTransactionInfos (accountId) {
 
 class CoinbaseAccessor {
   constructor (apiKey, apiSecret) {
-    _rootUri.set(this, 'https://api.coinbase.com/v2/');
+    _rootUri.set(this, 'https://api.coinbase.com/v2');
     _apiKey.set(this, apiKey);
     _apiSecret.set(this, apiSecret);
   }

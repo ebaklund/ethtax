@@ -3,19 +3,33 @@
 // Environment variables are defined in: '~/ethtax_env'
 // > eval $(~/ethtax_env)
 
+
+function get_env_variable(var_name) {
+  if (process.env[var_name] == undefined) {
+    throw new Error(
+      '\n' +
+      `Required environment variable \"${var_name}\" is not defined.\n` +
+      'Did you to forget to source credential file: \"eval $(~/ethtax_env)\"?\n' +
+      '\n'
+    )
+  }
+
+  return process.env[var_name];
+}
+
 module.exports = {
   idex: {
-    apiKey: process.env.IDEX_API_KEY
+    apiKey: get_env_variable('IDEX_API_KEY')
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
+    apiKey: get_env_variable('ETHERSCAN_API_KEY')
   },
   coinmarketcap: {
-    apiKey: process.env.COINMARKETCAP_API_KEY
+    apiKey: get_env_variable('COINMARKETCAP_API_KEY')
   },
   coinbase: {
-    apiKey: process.env.COINBASE_API_KEY,
-    apiSecret: process.env.COINBASE_API_SECRET
+    apiKey: get_env_variable('COINBASE_API_KEY'),
+    apiSecret: get_env_variable('COINBASE_API_SECRET')
   },
   addresses: [
     '0xe3fd53373195e4d34a8f9c6189f5c6c38dae0f14', // Cold paper
